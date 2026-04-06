@@ -42,10 +42,12 @@ WHERE DEPARTMENT_ID = 50
 -- ORDER BY FIRST_NAME || ' ' || LAST_NAME ASC;
 ORDER BY FIRST_NAME ASC, LAST_NAME ASC;
 
+
 -- 부서가 없는 직원을 출력
-SELECT  *
+SELECT  EMPLOYEE_ID
+        , FIRST_NAME || ' ' || LAST_NAME      ENAME
 FROM  employees
-WHERE department_id IS NULL;
+WHERE department_id IS NULL;      -- = NULL (작동안함) , IS NULL , IS NOT NULL
 
 
 
