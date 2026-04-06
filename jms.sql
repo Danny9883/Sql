@@ -1,0 +1,7 @@
+SELECT * FROM MYCLASS;
+
+UPDATE MYCLASS SET 전화 = '010-6466-6586', 이메일 = 'm_i_n_e@naver.com' WHERE 이름 = '조민석';
+COMMIT;
+
+INSERT INTO MYCLASS VALUES (3,'허태훈','010-0000-0000','',SYSDATE);
+COMMIT;
