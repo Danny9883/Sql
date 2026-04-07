@@ -363,6 +363,28 @@ SELECT   EMPLOYEE_ID                     번호,
  
 -- 2024년 04월 07일 17시 16분 30초 오후 수요일
 -- 한자로 출력
+ SELECT TO_CHAR(SYSDATE,'YYYY')||'年 '||
+        TO_CHAR(SYSDATE,'MM')||'月 '||
+        TO_CHAR(SYSDATE,'DD')||'日 '||
+        TO_CHAR(SYSDATE,'HH24')||'時 '||
+        TO_CHAR(SYSDATE,'MI')||'分 '||
+        TO_CHAR(SYSDATE,'SS')||'秒 '|| 
+         CASE WHEN TO_CHAR(SYSDATE,'AM')='오후' THEN '午後'
+              WHEN TO_CHAR(SYSDATE,'AM')='오전' THEN '午前'
+              END 
+        ||' '||                   
+        CASE WHEN TO_CHAR(SYSDATE,'DY')='월' THEN '月曜日'
+             WHEN TO_CHAR(SYSDATE,'DY')='화' THEN '火曜日'
+             WHEN TO_CHAR(SYSDATE,'DY')='수' THEN '水曜日'
+             WHEN TO_CHAR(SYSDATE,'DY')='목' THEN '木曜日'
+             WHEN TO_CHAR(SYSDATE,'DY')='금' THEN '金曜日'
+             WHEN TO_CHAR(SYSDATE,'DY')='토' THEN '土曜日'
+             WHEN TO_CHAR(SYSDATE,'DY')='일' THEN '日曜日'
+             END AS "오늘의 날짜"
+  FROM DUAL;
+
+
+  
   
  
  
