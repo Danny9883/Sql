@@ -273,8 +273,9 @@ SELECT  SYSDATE,
  SQL 문의 실행 순서
  1. FROM
  2. WHERE
- 3. SELECT
- 4. ORDER BY
+ 3. GROUP BY - HAVING
+ 4. SELECT
+ 5. ORDER BY
 --------------------------------------------*/
    
   
@@ -289,9 +290,153 @@ SELECT  SYSDATE,
   -- 부서 50,60,80번 부서가 아닌 인원수, 월급합, 월급평균
   SELECT  COUNT(EMPLOYEE_ID) , SUM(SALARY), ROUND(AVG(SALARY),3)
    FROM   EMPLOYEES
-   WHERE  DEPARTMENT_ID NOT IN (50,60,80)  -- 22명 
+   WHERE  DEPARTMENT_ID NOT IN (50,60,80);  -- 22명 
    
  ----------------------------------------------
+ -- 부서별 사원수
+ SELECT   DEPARTMENT_ID             부서번호, 
+          COUNT(EMPLOYEE_ID)        사원수
+  FROM    EMPLOYEES;
+  --     ORA-00937: 단일 그룹의 그룹 함수가 아닙니다
+  
+  
+ SELECT      DEPARTMENT_ID             부서번호, 
+             COUNT(EMPLOYEE_ID)        사원수
+  FROM       EMPLOYEES
+--  WHERE
+  GROUP BY   DEPARTMENT_ID
+--    HAVING
+  ORDER BY   DEPARTMENT_ID ASC  ;
+  
+  
+  -- 부서별 월급합 , 월급 평균
+ SELECT     DEPARTMENT_ID          부서번호, 
+            SUM(SALARY)            월급합, 
+            ROUND(AVG(SALARY),3)   월급평균
+  FROM      EMPLOYEES
+  GROUP BY  DEPARTMENT_ID
+  ORDER BY  DEPARTMENT_ID
+  ;
+  
+ ----------------------------------------------
+ -- 부서별 사원수 통계
+  SELECT    DEPARTMENT_ID         부서번호, 
+            COUNT(EMPLOYEE_ID)      사원수
+  FROM      EMPLOYEES
+--  GROUP BY  DEPARTMENT_ID
+  GROUP BY  ROLLUP( DEPARTMENT_ID )
+  ORDER BY  DEPARTMENT_ID
+  ;
+ 
+ 
+ -- 부서별 인원수, 월급합
+ SELECT     DEPARTMENT_ID            부서번호, 
+            COUNT(EMPLOYEE_ID)       사원수,
+            SUM(SALARY)              월급합
+  FROM      EMPLOYEES
+  GROUP BY  DEPARTMENT_ID
+  ORDER BY  DEPARTMENT_ID
+  ;
+ 
+ -- 부서별 인원수가 5명 이상인 부서 번호
+ SELECT     DEPARTMENT_ID , COUNT(EMPLOYEE_ID)
+  FROM      EMPLOYEES
+  GROUP BY  DEPARTMENT_ID
+   HAVING    COUNT(EMPLOYEE_ID) >= 5
+  ORDER BY  DEPARTMENT_ID
+  ;
+ 
+ -- 부서별 월급총계가 20000 이상인 부서번호
+ SELECT     DEPARTMENT_ID   부서번호, 
+            SUM(SALARY)     월급합
+  FROM      EMPLOYEES
+  GROUP BY  DEPARTMENT_ID
+   HAVING    SUM(SALARY) >= 20000
+  ORDER BY  DEPARTMENT_ID
+  ;
+ 
+ -- JOB_ID 별 인원수
+ SELECT     JOB_ID , COUNT(EMPLOYEE_ID)
+  FROM      EMPLOYEES
+  GROUP BY  JOB_ID
+  ORDER BY  JOB_ID
+  ;
+  
+  
+ -- JOB_TITLE 별 인원수 
+ SELECT     DECODE (JOB_ID, 'AD_PRES',	'President',
+                            'AD_VP'	,'Administration Vice President',
+                            'AD_ASST','Administration Assistant',
+                            'FI_MGR','Finance Manager',
+                            'FI_ACCOUNT','Accountant',
+                            'AC_MGR','Accounting Manager',
+                            'AC_ACCOUNT','Public Accountant',
+                            'SA_MAN','Sales Manager',
+                            'SA_REP','Sales Representative',
+                            'PU_MAN','Purchasing Manager',
+                            'PU_CLERK','Purchasing Clerk',
+                            'ST_MAN','Stock Manager',
+                            'ST_CLERK','Stock Clerk',
+                            'SH_CLERK','Shipping Clerk',
+                            'IT_PROG','Programmer',
+                            'MK_MAN','Marketing Manager',
+                            'MK_REP','Marketing Representative',
+                            'HR_REP','Human Resources Representative',
+                            'PR_REP','Public Relations Representative') 업무title,     -- JOB_TITLE
+            COUNT(JOB_ID)                                            인원수
+  FROM      EMPLOYEES
+  GROUP BY  DEPARTMENT_ID , JOB_ID
+  ORDER BY  DEPARTMENT_ID
+  ;
+ 
+ 
+  
+ -- 입사일기준 월별 인원수 , 2017년 기준
+ SELECT     TO_CHAR(HIRE_DATE,'MM') , COUNT(EMPLOYEE_ID)
+  FROM      EMPLOYEES
+  WHERE     TO_CHAR(HIRE_DATE,'YYYY') = 2017
+  GROUP BY  TO_CHAR(HIRE_DATE,'MM')
+  ORDER BY  TO_CHAR(HIRE_DATE,'MM')
+  ;
+ 
+ 
+ -- 부서별 최대월급이 14000 이상인 부서의 부서번호와 최대월급
+ SELECT     DEPARTMENT_ID ,  MAX(SALARY)
+  FROM      EMPLOYEES
+  GROUP BY  DEPARTMENT_ID
+   HAVING    MAX(SALARY) >= 14000
+  ORDER BY  DEPARTMENT_ID
+  ;
+  
+ -- 부서별로 모으고 같은부서는 직업별 인원수 , 월급평균
+ SELECT     DEPARTMENT_ID              부서번호, 
+            DECODE (JOB_ID, 'AD_PRES',	'President',
+                            'AD_VP'	,'Administration Vice President',
+                            'AD_ASST','Administration Assistant',
+                            'FI_MGR','Finance Manager',
+                            'FI_ACCOUNT','Accountant',
+                            'AC_MGR','Accounting Manager',
+                            'AC_ACCOUNT','Public Accountant',
+                            'SA_MAN','Sales Manager',
+                            'SA_REP','Sales Representative',
+                            'PU_MAN','Purchasing Manager',
+                            'PU_CLERK','Purchasing Clerk',
+                            'ST_MAN','Stock Manager',
+                            'ST_CLERK','Stock Clerk',
+                            'SH_CLERK','Shipping Clerk',
+                            'IT_PROG','Programmer',
+                            'MK_MAN','Marketing Manager',
+                            'MK_REP','Marketing Representative',
+                            'HR_REP','Human Resources Representative',
+                            'PR_REP','Public Relations Representative') JOB_TITLE,     -- JOB_TITLE
+            COUNT(JOB_ID)              인원수, 
+            ROUND(AVG(SALARY),2)       월급평균
+  FROM      EMPLOYEES
+--  GROUP BY  DEPARTMENT_ID , JOB_ID
+--  GROUP BY  ROLLUP(DEPARTMENT_ID , JOB_ID)
+  GROUP BY  DEPARTMENT_ID , JOB_ID
+  ORDER BY  DEPARTMENT_ID
+  ;
  
  
  
