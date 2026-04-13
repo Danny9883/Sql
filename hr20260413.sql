@@ -178,6 +178,8 @@ VARIABLE  O_CUR  REFCURSOR;
 EXECUTE   GET_SAME_DEPT(166, :O_CUR)
 PRINT     O_CUR;
 
+--------------------------------------------------------
+
 
 
 
