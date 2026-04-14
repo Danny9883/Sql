@@ -1,0 +1,23 @@
+성적처리 TABLE
+ 업무
+ 학생 : 학번, 이름, 전화, 입학일
+ 성적 : 학번, 국어, 영어, 수학, 총점, 평균, 석차 결과
+ 과목은 변경될 수 있다.
+ 
+ TABLE 생성
+ 학생     : 학번(PK), 이름,   전화,   입학일
+ STUDENT    STID      STNAME  PHONE   INDATE  
+ 
+ 성적     : 일련번호(PK), 교과목,   점수,   학번(FK)
+ SCORES     SCID          SUBJECT   SCORE   STID
+ 
+ -- 제약조건(CONSTRAINTS) - 무결성  
+  TABLE 에 저장될 데이터에 조건을 부여하여 잘못된 DATA 입려되는 방지
+  1. 주식별자 설정 : 기본키
+     PRIMARY KEY     : NOT NULL + UNIQUE 기본 적용
+      CREATE TABLE 명령안에 한번만 사용가능
+  2. NOT NULL / NULL : 필수입력, 컬럼단위 제약조건
+  3. UNIQUE          : 중복방지
+  4. CHECK           : 값의 범위지정 , DOMAIN 제약 조건 
+  5. FOREIGN KEY     : 외래키 제약조건
+  
