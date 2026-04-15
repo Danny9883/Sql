@@ -1,0 +1,19 @@
+CREATE TABLE emp_big AS
+SELECT
+    e.employee_id + (lv * 100000) AS employee_id,
+    e.first_name,
+    e.last_name,
+    e.email || lv AS email,
+    e.phone_number,
+    e.hire_date,
+    e.job_id,
+    e.salary,
+    e.commission_pct,
+    e.manager_id,
+    e.department_id
+FROM hr.employees e
+CROSS JOIN (
+    SELECT LEVEL AS lv
+    FROM dual
+    CONNECT BY LEVEL <= 10000
+);
