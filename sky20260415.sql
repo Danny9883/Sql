@@ -178,6 +178,7 @@ ORA-00001: 무결성 제약 조건(SKY.SYS_C008416)에 위배됩니다
 
 COMMIT;
     
+SELECT ZIPCODE, SIDO, GUGUN, DONG, BUNJI, SEQ  FROM ZIPCODE  WHERE DONG LIKE '%롯데백화점%' ;
      
    
   
