@@ -20,6 +20,15 @@
   3. UNIQUE          : 중복방지
   4. CHECK           : 값의 범위지정 , DOMAIN 제약 조건 
   5. FOREIGN KEY     : 외래키 제약조건
+
+-- 관계가 설정된 테이블 삭제방법 1
+DROP TABLE SCORES;  -- 자식테이블 먼저 삭제
+DROP TABLE STUDENT; -- 부모테이블을 나중에 삭제
+  
+DROP TABLE STUDENT CASCADE CONSTRAINT PURGE; -- 순서에 무관하게 삭제
+  
+  
+  
   
 ----------------------------------------------------------------------
  학생     : 학번(PK), 이름,   전화,   입학일
@@ -100,6 +109,7 @@ INSERT INTO SCORES VALUES (7,  '영어',  80, 4);
 INSERT INTO SCORES VALUES (8,  '수학',  85, 4);
 INSERT INTO SCORES VALUES (9,  '국어', 805, 5); -- ORA-02290: 체크 제약조건(SKY.SYS_C008393)이 위배되었습니다
 INSERT INTO SCORES VALUES (10, '영어', 100, 8); -- ORA-02291: 무결성 제약조건(SKY.STID_FK)이 위배되었습니다- 부모 키가 없습니다
+COMMIT;
 
 DML 추가, 수정, 삭제 -- COMMIT 필수
 1. INSERT(추가) - 줄(DATA) 추가
@@ -190,13 +200,15 @@ DML 추가, 수정, 삭제 -- COMMIT 필수
  과목은 변경될 수 있다.
  
 ---------------------------------------------
+학생
+SELECT * FROM STUDENT;
 
  -- 조회
  1. 학번, 이름, 점수(국어)
  SELECT  ST.STID            학번,
          ST.STNAME          이름,
          SC.SCORE           국어점수
-  FROM   STUDENT  ST  JOIN  SCORES  SC
+  FROM   STUDENT  ST JOIN  SCORES  SC
     ON   ST.STID = SC.STID
   WHERE  SC.SUBJECT = '국어';
  
@@ -211,7 +223,8 @@ DML 추가, 수정, 삭제 -- COMMIT 필수
          V.AVGSC           평균
   FROM  STUDENT  ST LEFT JOIN ( SELECT  STID,SUM(SCORE) TOTSC , ROUND(AVG(SCORE),2)  AVGSC
                                FROM  SCORES
-                               GROUP BY STID) V  ON ST.STID = V.STID;
+                               GROUP BY STID) V  ON ST.STID = V.STID
+  ORDER BY 학번 ASC;
          
  
  
@@ -231,6 +244,7 @@ DML 추가, 수정, 삭제 -- COMMIT 필수
 
  
  4. 모든 학생의 학번, 이름, 총점, 평균, 등급, 석차
+ -- 점수가 NULL 인 학생은 미응시
  SELECT  ST.STID                                        학번,
          ST.STNAME                                      이름,
          DECODE(V.TOTSC,NULL,'미응시',V.TOTSC)          총점,
@@ -250,7 +264,33 @@ DML 추가, 수정, 삭제 -- COMMIT 필수
   ORDER BY 학번 ASC
 ;
 
+4-2) 2026-04-15 선생님 예제
 
+SELECT  ST.STID                                           학번,
+        ST.STNAME                                         이름,
+        CASE
+          WHEN SUM(SC.SCORE) IS NULL THEN '미응시'
+          ELSE         TO_CHAR(SUM(SC.SCORE),'990')
+        END                                               총점,
+        CASE
+          WHEN AVG(SC.SCORE) IS NULL THEN '미응시'
+          ELSE         TO_CHAR(AVG(SC.SCORE),'990.00')
+        END                                               평균,
+        CASE
+          WHEN ROUND(AVG(SC.SCORE),2) BETWEEN 90 AND 100   THEN 'A'
+          WHEN ROUND(AVG(SC.SCORE),2) BETWEEN 80 AND 89.99 THEN 'B'
+          WHEN ROUND(AVG(SC.SCORE),2) BETWEEN 70 AND 79.99 THEN 'C'
+          WHEN ROUND(AVG(SC.SCORE),2) BETWEEN 60 AND 69.99 THEN 'D'
+          ELSE                                                  'F'
+        END                                               등급,
+        RANK() OVER(ORDER BY SUM(SC.SCORE) DESC NULLS LAST)          석차
+ FROM       STUDENT  ST
+  LEFT JOIN SCORES   SC
+   ON       ST.STID = SC.STID
+ GROUP BY ST.STID, ST.STNAME
+;
+
+----------------------------------------------------------------------
  5. 모든 학생의 학번, 이름, 국어, 영어, 수학, 총점, 평균, 등급, 석차
  SELECT  STID , 
          SUM(SCORE) TOTSC , 
@@ -306,6 +346,139 @@ DML 추가, 수정, 삭제 -- COMMIT 필수
                                   WHERE SUBJECT = '수학') M ON M.STID = ST.STID
   ORDER BY 석차 ASC
 ;
+------------------------------------------------------------------------------------
+                               2026-04-15
+------------------------------------------------------------------------------------
+-- 모든 학생의 학번, 이름, 국어, 영어, 수학, 총점, 평균, 등급, 석차
+1. ORACLE 10G 방식
+1-1) 학번, 국어, 영어, 수학
+  SELECT  SC.STID                                 학번, 
+          DECODE( SC.SUBJECT, '국어' , SC.SCORE)  국어, 
+          DECODE( SC.SUBJECT, '영어' , SC.SCORE)  영어, 
+          DECODE( SC.SUBJECT, '수학' , SC.SCORE)  수학
+   FROM   SCORES  SC;
+   
+1-2) 학번, 국어, 영어, 수학
+  SELECT  SC.STID                                      학번, 
+          SUM(DECODE( SC.SUBJECT, '국어' , SC.SCORE))  국어, 
+          SUM(DECODE( SC.SUBJECT, '영어' , SC.SCORE))  영어, 
+          SUM(DECODE( SC.SUBJECT, '수학' , SC.SCORE))  수학
+   FROM   SCORES  SC
+   GROUP BY SC.STID
+;
+
+
+1-3) JOIN 추가 : 학번, 이름, 국어, 영어, 수학 
+   SELECT ST.STID                                     학번,
+          ST.STNAME                                    이름,
+          SUM(DECODE( SC.SUBJECT, '국어' , SC.SCORE))  국어, 
+          SUM(DECODE( SC.SUBJECT, '영어' , SC.SCORE))  영어, 
+          SUM(DECODE( SC.SUBJECT, '수학' , SC.SCORE))  수학
+   FROM       SCORES  SC
+   RIGHT JOIN  STUDENT ST
+      ON  SC.STID = ST.STID
+   GROUP BY ST.STID ,  ST.STNAME
+   ORDER BY ST.STID ,  ST.STNAME;
+
+
+1-4) 학번, 이름, 국어, 영어, 수학, 총점, 평균
+   SELECT ST.STID                                      학번,
+          ST.STNAME                                    이름,
+          SUM(DECODE( SC.SUBJECT, '국어' , SC.SCORE))  국어, 
+          SUM(DECODE( SC.SUBJECT, '영어' , SC.SCORE))  영어, 
+          SUM(DECODE( SC.SUBJECT, '수학' , SC.SCORE))  수학,
+          SUM(SCORE)                                   총점,
+          ROUND(AVG(SCORE),2)                          평균
+   FROM       SCORES  SC
+   RIGHT JOIN  STUDENT ST
+      ON  SC.STID = ST.STID
+   GROUP BY ST.STID ,  ST.STNAME
+   ORDER BY ST.STID ,  ST.STNAME;
+   
+   
+1-5) 학번, 이름, 국어, 영어, 수학, 총점, 평균, 등급, 석차
+  -- 미응시자는 '미응시' 로 출력
+  -- 등급 : 비등가 조인으로 해결
+  CREATE TABLE  SCOREGRADE 
+  (
+    GRADE    VARCHAR2(1)   PRIMARY KEY,
+    LOSCORE  NUMBER(6,2),
+    HISCORE  NUMBER(6,2)
+  );
+  
+INSERT  INTO SCOREGRADE VALUES ('A', 90, 100);
+INSERT  INTO SCOREGRADE VALUES ('B', 80, 89.99);
+INSERT  INTO SCOREGRADE VALUES ('C', 70, 79.99);
+INSERT  INTO SCOREGRADE VALUES ('D', 60, 69.99);
+INSERT  INTO SCOREGRADE VALUES ('F',  0, 59.99);
+COMMIT;
+
+  SELECT  T.학번, 
+          T.이름, 
+          DECODE(T.국어,NULL,'미응시',T.국어)          국어, 
+          DECODE(T.영어,NULL,'미응시',T.영어)          영어,
+          DECODE(T.수학,NULL,'미응시',T.수학)          수학,
+          DECODE(T.총점,NULL,'미응시',T.총점)          총점,
+          DECODE(T.평균,NULL,'미응시',T.평균)          평균,
+          DECODE(SG.GRADE,NULL,'미응시',SG.GRADE)      등급,
+          RANK() OVER(ORDER BY T.총점 DESC NULLS LAST) 석차
+   FROM  
+  (  
+  SELECT  ST.STID                                      학번,
+          ST.STNAME                                    이름,
+          SUM(DECODE( SC.SUBJECT, '국어' , SC.SCORE))  국어, 
+          SUM(DECODE( SC.SUBJECT, '영어' , SC.SCORE))  영어, 
+          SUM(DECODE( SC.SUBJECT, '수학' , SC.SCORE))  수학,
+          SUM(SCORE)                                   총점,
+          ROUND(AVG(SCORE),2)                          평균
+   FROM        SCORES  SC
+   RIGHT JOIN  STUDENT ST
+      ON       SC.STID = ST.STID
+   GROUP BY ST.STID ,  ST.STNAME
+   ORDER BY ST.STID ,  ST.STNAME
+   )  T   LEFT JOIN SCOREGRADE  SG
+                 ON T.평균 BETWEEN SG.LOSCORE AND SG.HISCORE
+;
+
+-----------------------------------------------------------------
+2. ORACLE 11G 방식  PIVOT 명령사용 : 통계를 생성 -- 일반적으로 집계함수와 같이 사용
+
+학번, 이름, 국어, 영어, 수학, 총점, 평균, 등급, 석차
+
+1) 학번, 국어, 영어, 수학
+SELECT * FROM (
+    SELECT  STID, SUBJECT, SCORE
+      FROM  SCORES
+)
+PIVOT
+(
+  SUM(SCORE)
+     FOR SUBJECT
+       IN('국어' AS 국어, '영어' AS 영어,'수학' AS 수학)
+);
+
+2) 학번, 이름, 국어, 영어, 수학, 총점, 평균, 등급, 석차
+
+SELECT  ST.STID  학번, ST.STNAME, T.국어, T.영어, T.수학, 
+        ( NVL(T.국어,0) +  NVL(T.영어,0) + NVL(T.수학,0) )     총점, 
+        ( NVL(T.국어,0) +  NVL(T.영어,0) + NVL(T.수학,0) ) / 3 평균, 
+        SG.GRADE                                               등급, 
+        RANK() OVER(ORDER BY (NVL(T.국어,0) +  NVL(T.영어,0) + NVL(T.수학,0)) DESC NULLS LAST)  석차
+  FROM  (SELECT * FROM (
+            SELECT  STID, SUBJECT, SCORE
+              FROM  SCORES
+        )
+        PIVOT
+        (
+          SUM(SCORE)
+             FOR SUBJECT
+               IN('국어' AS 국어, '영어' AS 영어,'수학' AS 수학)
+        )
+    )  T RIGHT JOIN STUDENT    ST ON T.STID = ST.STID
+          LEFT JOIN SCOREGRADE SG ON ( NVL(T.국어,0) +  NVL(T.영어,0) + NVL(T.수학,0) ) / 3
+               BETWEEN SG.LOSCORE AND SG.HISCORE;
+          
+
 
 
 
